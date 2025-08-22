@@ -1,19 +1,19 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase/fcm_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'firebase_options.dart';
 
 
 Future<void>main()async{
+  final FcmService fcmService=FcmService();
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await fcmService.initialize();
+  print(await fcmService.getFcmToken());
+  await fcmService.onTokenRefresh();
   runApp(const MyApp());
 }
-// void main() {
-//   runApp(const MyApp());
-// }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -146,11 +146,11 @@ final FirebaseFirestore db=FirebaseFirestore.instance;
               team1Name: "Bangladesh",
               team2Name: "India",
               team1Score: 3,
-              team2Score: 0,
+              team2Score: 1,
               matchRunning: false,
               winner:"Bangladesh",
           );
-          await db.collection('football').doc(liveScore.id).set(liveScore.toMap());
+          await db.collection('football').doc(liveScore.id).update(liveScore.toMap());
         },
         child: Icon(Icons.add,),
       ),
