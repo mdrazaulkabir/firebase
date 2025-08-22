@@ -44,29 +44,33 @@ class _firebaseState extends State<firebase> {
 
 List<LiveScore>_listLiveScore=[];
 final FirebaseFirestore db=FirebaseFirestore.instance;
-Future<void>_getLiveScore()async{
-  _listLiveScore.clear();
-  final QuerySnapshot<Map<String, dynamic>> snapshot =await db.collection('football').get();
-  for(QueryDocumentSnapshot<Map<String,dynamic>> doc in snapshot.docs){
-    LiveScore liveScore = LiveScore(
-        id: doc.id,
-        team1Name: doc.get('team1'),
-        team2Name: doc.get('team2'),
-        team1Score: doc.get('team1_score'),
-        team2Score: doc.get('team2_score'),
-        matchRunning: doc.get('is_runing'),
-        winner: doc.get('winner'),
-      );
-    _listLiveScore.add(liveScore);
-    }
-  setState(() { });
-}
-@override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    _getLiveScore();
-  }
+// Future<void>_getLiveScore()async{
+//   _listLiveScore.clear();
+//   final QuerySnapshot<Map<String, dynamic>> snapshot =await db.collection('football').get();
+//   for(QueryDocumentSnapshot<Map<String,dynamic>> doc in snapshot.docs){
+//     LiveScore liveScore = LiveScore(
+//         id: doc.id,
+//         team1Name: doc.get('team1'),
+//         team2Name: doc.get('team2'),
+//         team1Score: doc.get('team1_score'),
+//         team2Score: doc.get('team2_score'),
+//         matchRunning: doc.get('is_running'),
+//         winner: doc.get('winner'),
+//       );
+//     _listLiveScore.add(liveScore);
+//     }
+//   setState(() { });
+// }
+
+
+// @override
+//   void initState() {
+//     // TODO: implement initState
+//     super.initState();
+//     _getLiveScore();
+//   }
+//
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,34 +79,62 @@ Future<void>_getLiveScore()async{
         title: Text("Firebase Demo class"),
         centerTitle: true,
       ),
-      body: ListView.builder(
-          itemCount: _listLiveScore.length,
-          itemBuilder: (context, index) {
-            LiveScore liveScore = _listLiveScore[index];
-            return ListTile(
-              leading: CircleAvatar(
-                radius: 8,
-                backgroundColor: liveScore.matchRunning ? Colors.green : Colors.red,
-              ),
-              title: Text(liveScore.id),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(liveScore.team1Name),
-                      Text(" vs "),
-                      Text(liveScore.team2Name)
-                    ],
-                  ),
-                  Text("Match is runing ${liveScore.matchRunning}"),
-                  Text("Winnner is ${liveScore.winner}")
-                ],
-              ),
-              trailing: Text(
-                  "${liveScore.team1Score} : ${liveScore.team2Score}"),
-            );
-          }),
+      body: StreamBuilder(
+        stream: db.collection('football').snapshots(),
+        builder: (context,  AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>>snapshots){
+          if(snapshots.connectionState==ConnectionState.waiting){
+            return Center(child: CircularProgressIndicator());
+          }
+          if(snapshots.hasError){
+            return Center(child: Text("Error from ${snapshots.error.toString()}"));
+          }
+
+          if (snapshots.hasData) {
+            _listLiveScore.clear();
+            for (QueryDocumentSnapshot<Map<String, dynamic>> doc in snapshots.data!.docs) {
+              LiveScore liveScore = LiveScore(id: doc.id,
+                  team1Name: doc.get('team1'),
+                  team2Name: doc.get('team2'),
+                  team1Score: doc.get('team1_score'),
+                  team2Score: doc.get("team2_score"),
+                  matchRunning: doc.get("is_running"),
+                  winner: doc.get("winner"));
+              _listLiveScore.add(liveScore);
+            }
+          }
+
+          {
+            return ListView.builder(
+                itemCount: _listLiveScore.length,
+                itemBuilder: (context, index) {
+                  LiveScore liveScore = _listLiveScore[index];
+                  return ListTile(
+                    leading: CircleAvatar(
+                      radius: 8,
+                      backgroundColor: liveScore.matchRunning ? Colors.green : Colors.red,
+                    ),
+                    title: Text(liveScore.id),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(liveScore.team1Name),
+                            Text(" vs "),
+                            Text(liveScore.team2Name)
+                          ],
+                        ),
+                        Text("Match is runing ${liveScore.matchRunning}"),
+                        Text("Winnner is ${liveScore.winner}")
+                      ],
+                    ),
+                    trailing: Text(
+                        "${liveScore.team1Score} : ${liveScore.team2Score}"),
+                  );
+                });
+          }
+        }
+      ),
     );
   }
 }
