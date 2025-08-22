@@ -109,9 +109,12 @@ final FirebaseFirestore db=FirebaseFirestore.instance;
                 itemBuilder: (context, index) {
                   LiveScore liveScore = _listLiveScore[index];
                   return ListTile(
+                    onLongPress: (){
+                      db.collection('football').doc(liveScore.id).delete();
+                    },
                     leading: CircleAvatar(
                       radius: 8,
-                      backgroundColor: liveScore.matchRunning ? Colors.green : Colors.red,
+                      backgroundColor: liveScore.matchRunning ? Colors.green : Colors.white,
                     ),
                     title: Text(liveScore.id),
                     subtitle: Column(
@@ -124,16 +127,32 @@ final FirebaseFirestore db=FirebaseFirestore.instance;
                             Text(liveScore.team2Name)
                           ],
                         ),
-                        Text("Match is runing ${liveScore.matchRunning}"),
-                        Text("Winnner is ${liveScore.winner}")
+                        Text("Match is running : ${liveScore.matchRunning}"),
+                        Text("Winner is : ${liveScore.winner}")
                       ],
                     ),
                     trailing: Text(
-                        "${liveScore.team1Score} : ${liveScore.team2Score}"),
+                        "${liveScore.team1Score} : ${liveScore.team2Score}",style: TextStyle(fontSize: 18,fontWeight: FontWeight.bold),),
                   );
                 });
           }
         }
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.greenAccent,
+        onPressed: () async {
+          LiveScore liveScore = LiveScore(
+              id: "Ban vs In",
+              team1Name: "Bangladesh",
+              team2Name: "India",
+              team1Score: 3,
+              team2Score: 0,
+              matchRunning: false,
+              winner:"Bangladesh",
+          );
+          await db.collection('football').doc(liveScore.id).set(liveScore.toMap());
+        },
+        child: Icon(Icons.add,),
       ),
     );
   }
@@ -157,4 +176,15 @@ class LiveScore {
     required this.matchRunning,
     required this.winner,
   });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'team1': team1Name,
+      'team2': team2Name,
+      'team1_score': team1Score,
+      'team2_score': team2Score,
+      "is_running": matchRunning,
+      'winner':winner,
+    };
+  }
 }
